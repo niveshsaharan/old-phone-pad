@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Old Phone Pad</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="wrapper">
+    <!-- ## phone area -->
+    <div class="phone">
+        <span class="title">Old Phone Pad</span>
+        <div class="phone-container">
+            <textarea name="input" id="input" class="number-input" placeholder="Eg. 4433555 555666#"></textarea>
+            <textarea name="output" id="output" class="number-input" disabled readonly placeholder="Eg. HELLO"></textarea>
+            <!-- ## keyboard -->
+            <div class="keyboard">
+                <div class="number">
+                    <span data-number="1"><i>1</i></span>
+                    <span data-number="2"><i>2</i></span>
+                    <span data-number="3"><i>3</i></span>
+                    <span data-number="4"><i>4</i></span>
+                    <span data-number="5"><i>5</i></span>
+                    <span data-number="6"><i>6</i></span>
+                    <span data-number="7"><i>7</i></span>
+                    <span data-number="8"><i>8</i></span>
+                    <span data-number="9"><i>9</i></span>
+                    <span data-number="*"><i>*</i></span>
+                    <span data-number="0"><i>0</i></span>
+                    <span data-number="#"><i>#</i></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+    const numberIndexToChars = [ " ", "&’(", "ABC", "DEF", "GHI", "JKL", "MNO", "PQRS", "TUV", "WXYZ"];
+    const validChars = [
+        '1','2','3',
+        '4','5','6',
+        '7','8','9',
+        '*','0',' ',
+    ];
+
+    function convertNumberToText(S, requireHashAtEnd = true)
+    {
+        S = S + '';
+
+        if(typeof S !== 'string'){
+            alert("Input must be a string.");
+            return;
+        }
+
+        if(requireHashAtEnd) {
+            if (!S.endsWith('#')) {
+                alert("The string should end with a #");
+                return;
+            }
+        }
+
+        if(S.substring(-1) === '#'){
+            S = S.substring(0, S.length - 1)
+        }
+
+        const inputStringArray = S.split('')
+
+        let outputStringArray = []
+        // Traverse the string str
+        let i = 0;
+        while (i < inputStringArray.length)
+        {
+            if (! validChars.includes(inputStringArray[i]))
+            {
+                i++;
+                continue;
+            }
+
+            // Stores the number of
+            // continuous clicks
+            let count = 0;
+
+            // Iterate a loop to find the
+            // count of same characters
+
+            if(inputStringArray[i] !== '0'){
+                while (i + 1 < inputStringArray.length && inputStringArray[i] === inputStringArray[i + 1] && ! ['*'].includes(inputStringArray[i + 1]))
+                {
+                    const currentChar = inputStringArray[i]
+                    if(typeof numberIndexToChars[currentChar] !== 'undefined'){
+                        if(count === numberIndexToChars[currentChar].length - 1){
+                            break;
+                        }
+                    }
+
+                    count++;
+                    i++;
+
+                    // Handle the end condition
+                    if (i === inputStringArray.length){
+                        break;
+                    }
+                }
+            }
+
+            if (parseInt(inputStringArray[i]) > 0 && typeof numberIndexToChars[inputStringArray[i]] !== 'undefined')
+            {
+                outputStringArray.push(numberIndexToChars[inputStringArray[i].charCodeAt(0) - 48][count % numberIndexToChars[inputStringArray[i]].length]);
+            } else if (inputStringArray[i] === '*')
+            {
+                outputStringArray.push('*');
+            }
+
+            i++;
+        }
+
+        return useStarAsBackspace(outputStringArray).join('').trim();
+    }
+
+    /**
+     * If there is a *, use it to remove the character before it
+     * @param inputArray
+     * @returns {*[]}
+     */
+    function useStarAsBackspace(inputArray){
+        const outputStringArray = [...inputArray]
+        let elemsToDelete = 0
+        let finalOutput = []
+
+        outputStringArray.reverse();
+        outputStringArray.forEach((s, i) => {
+            if(s !=='*' && elemsToDelete === 0){
+                finalOutput.push(s)
+            }
+
+            if(s === '*'){
+                elemsToDelete += 1;
+            }
+            else if(elemsToDelete > 0){
+                elemsToDelete -= 1;
+            }
+        });
+
+        return finalOutput.reverse();
+    }
+
+    let currentInput = ''
+    let currentInputRaw = ''
+    let lastPressedAt = new Date().getTime()
+    document.querySelectorAll('[data-number] i').forEach(node =>
+    {
+        node.addEventListener('click', function(e){
+            const currentValue = e.target.parentElement.dataset.number
+            if(lastPressedAt <= (new Date().getTime() - 1000) && currentInputRaw){
+                currentInput += '0'
+            }
+            currentInput += currentValue;
+            currentInputRaw += currentValue
+            document.getElementById('output').value = convertNumberToText(currentInput, false) || ''
+            document.getElementById('input').value = currentInputRaw || ''
+            lastPressedAt = new Date().getTime()
+        });
+    });
+
+    document.getElementById('input').addEventListener('input', function(e){
+        currentInput = e.target.value;
+        document.getElementById('output').value = convertNumberToText(currentInput, false) || ''
+    });
+
+    document.addEventListener('keyup', function(e){
+        if(e.target.nodeName === 'BODY'){
+            if(validChars.includes(e.key + '')){
+                currentInputRaw += e.key;
+                currentInput += e.key;
+                document.getElementById('input').value = currentInputRaw || ''
+                document.getElementById('output').value = convertNumberToText(currentInput, false) || ''
+            }
+        }
+    })
+</script>
+
+</body>
+</html>
